@@ -5,6 +5,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.BucketWebsiteConfiguration;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -29,11 +30,22 @@ public class Main {
             System.exit(-1);
         }
         final String bucketName = args[0];
+        String prefix = null;
+        if (args.length == 2)
+        {
+            prefix = args[1];
+        }
 
         AmazonS3Client s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
         String region = s3Client.getBucketLocation(bucketName);
         s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
-        ObjectListing objectListing = s3Client.listObjects(new ListObjectsRequest().withBucketName(bucketName));
+        ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName);
+        if(prefix != null)
+        {
+            LOGGER.info("Listing Objects using prefix: "+prefix);
+            listObjectsRequest = listObjectsRequest.withPrefix(prefix);
+        }
+        ObjectListing objectListing = s3Client.listObjects(listObjectsRequest);
         LOGGER.info(objectListing.toString());
         List<S3ObjectSummary> summaries = objectListing.getObjectSummaries();
 
@@ -60,7 +72,10 @@ public class Main {
                         .findFirst().get();
         LOGGER.info("Newest: " + newestSummary.getKey() + " LM: " + newestSummary.getLastModified());
 
-        LOGGER.info("Website URL: " + getWebsiteEndpoint(bucketName, Regions.fromName(region)) + "/" + newestSummary.getKey());
+        BucketWebsiteConfiguration websiteConfiguration = s3Client.getBucketWebsiteConfiguration(bucketName);
+        if (websiteConfiguration != null) {
+            LOGGER.info("Website URL: " + getWebsiteEndpoint(bucketName, Regions.fromName(region)) + "/" + newestSummary.getKey());
+        }
     }
 
 

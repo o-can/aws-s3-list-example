@@ -30,8 +30,7 @@ public class Main {
         }
         final String bucketName = args[0];
         String prefix = null;
-        if (args.length == 2)
-        {
+        if (args.length == 2) {
             prefix = args[1];
         }
 
@@ -39,9 +38,8 @@ public class Main {
         String region = s3Client.getBucketLocation(bucketName);
         s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName);
-        if(prefix != null)
-        {
-            LOGGER.info("Listing Objects using prefix: "+prefix);
+        if (prefix != null) {
+            LOGGER.info("Listing Objects using prefix: " + prefix);
             listObjectsRequest = listObjectsRequest.withPrefix(prefix);
         }
         ObjectListing objectListing = s3Client.listObjects(listObjectsRequest);
@@ -73,7 +71,10 @@ public class Main {
 
         BucketWebsiteConfiguration websiteConfiguration = s3Client.getBucketWebsiteConfiguration(bucketName);
         if (websiteConfiguration != null) {
-            LOGGER.info("Website URL: " + getWebsiteEndpoint(bucketName, Regions.fromName(region)) + "/" + newestSummary.getKey());
+            String endpoint = getWebsiteEndpoint(bucketName, Regions.fromName(region));
+            if (!"<UNDEFINED>".equals(endpoint)) {
+                LOGGER.info("Website URL: " + getWebsiteEndpoint(bucketName, Regions.fromName(region)) + "/" + newestSummary.getKey());
+            }
         }
     }
 
@@ -94,8 +95,8 @@ public class Main {
                 return String.format("http://%s.s3-website.%s.amazonaws.com", bucketName, region.getName());
             case CN_NORTH_1:
             case GovCloud:
+            default:
                 return "<UNDEFINED>";
         }
-        return "";
     }
 }
